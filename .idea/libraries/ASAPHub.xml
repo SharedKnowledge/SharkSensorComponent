@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="ASAPHub">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/ASAPHub.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/ASAPJava.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/SharkPeer.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
