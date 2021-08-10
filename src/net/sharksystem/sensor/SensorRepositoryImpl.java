@@ -122,11 +122,11 @@ public class SensorRepositoryImpl implements SensorRepository {
         try(Connection conn = this.connect();
             PreparedStatement pstmt = conn.prepareStatement(sql)){
             for(SensorData entry: newList){
-            pstmt.setString(1, entry.bn);
-            pstmt.setString(2, dateHelper.dateToString(entry.dt));
-            pstmt.setDouble(3,entry.temp);
-            pstmt.setDouble(4, entry.hum);
-            pstmt.setDouble(5, entry.soil);
+            pstmt.setString(1, entry.getBn());
+            pstmt.setString(2, dateHelper.dateToString(entry.getDt()));
+            pstmt.setDouble(3,entry.getTemp());
+            pstmt.setDouble(4, entry.getHum());
+            pstmt.setDouble(5, entry.getSoil());
             pstmt.executeUpdate();
             }
         }

@@ -7,14 +7,14 @@ public class SensorData {
 
 
 
-    String bn;
-    double temp;
-    Unit tempUnit;
-    double soil;
-    Unit soilUnit;
-    double hum;
-    Unit humUnit;
-    Date dt;
+    private String bn;
+    private double temp;
+    private Unit tempUnit;
+    private double soil;
+    private Unit soilUnit;
+    private double hum;
+    private Unit humUnit;
+    private Date dt;
 
     public SensorData(String bn, double temp, Unit tempUnit, double soil,
                       Unit soilUnit, double hum, Unit humUnit, Date dt) {
@@ -87,5 +87,6 @@ public class SensorData {
     public void setHumUnit(Unit humUnit) {
         this.humUnit = humUnit;
     }
+
 
 }
