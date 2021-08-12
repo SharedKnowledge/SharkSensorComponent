@@ -135,4 +135,22 @@ public class SensorRepositoryImpl implements SensorRepository {
         }
     }
 
+    @Override
+    public List<SensorData> selectForIdNewerThan(Date date, String sensorId) {
+        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt > CONVERT(datetime, ?);";
+        List<SensorData> entryList = new ArrayList<>();
+        try(Connection conn = this.connect();
+            PreparedStatement pstmt = conn.prepareStatement(selectSQL)){
+            pstmt.setString(1, sensorId);
+            pstmt.setString(2, dateHelper.dateToString(date));
+            ResultSet rs = pstmt.executeQuery();
+
+            entryList = getObjectsFromResultSet(rs);
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return entryList;    }
+
 }
