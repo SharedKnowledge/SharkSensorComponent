@@ -55,7 +55,9 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
         else{
             entries.addAll(repo.selectForIdNewerThan(this.newest, this.sensorId));
         }
-        this.sendNewSensorDataToASAPPeer(entries);
+        if(!entries.isEmpty()) {
+            this.sendNewSensorDataToASAPPeer(entries);
+        }
     }
 
     @Override
