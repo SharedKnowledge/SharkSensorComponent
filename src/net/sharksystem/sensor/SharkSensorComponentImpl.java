@@ -8,6 +8,7 @@ import net.sharksystem.asap.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +18,9 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     private SensorRepository repo;
     private ASAPPeer peer;
     private SharkSensorSerializer serializer;
+    private String sensorId;
+    private Date newest;
+
 
 
     @Override
@@ -27,9 +31,11 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
                 SharkSensorComponent.APP_FORMAT, this);
     }
 
-    public SharkSensorComponentImpl(SensorRepository repo, SharkSensorSerializer serializer){
+    public SharkSensorComponentImpl(
+            SensorRepository repo, SharkSensorSerializer serializer, String sensorId){
         this.repo = repo;
         this.serializer = serializer;
+        this.sensorId = sensorId;
 
     }
 
@@ -41,11 +47,19 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void checkForNewDataInDB(){
-        //TODO
+        List<SensorData> entries = new ArrayList<>();
+        if(this.newest==null){
+            entries.addAll(repo.selectAllForId(this.sensorId));
+            this.newest = getNewestFromList(entries);
+        }
+        else{
+            entries.addAll(repo.selectForIdNewerThan(this.newest, this.sensorId));
+        }
+        this.sendNewSensorDataToASAPPeer(entries);
     }
 
     @Override
-    public void sendNewSensorDataToASAPPeer(SensorData sensorData) {
+    public void sendNewSensorDataToASAPPeer(List<SensorData> sensorData) {
         try {
             this.peer.sendASAPMessage(APP_FORMAT, URI, serializer.serializeSensorData(sensorData).getBytes());
         }
@@ -61,17 +75,7 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     }
 
     @Override
-    public List<SensorData> getSensorDataForId(String id){
-        return repo.selectAllForId(id);
-    }
-
-    @Override
-    public SensorData getSensorDataForIdAndTime(String id, Date dt) {
-        return repo.selectSpecificEntry(id, dt);
-    }
-
-    @Override
-    public void asapMessagesReceived(ASAPMessages asapMessages, String s, List<ASAPHop> list) throws IOException {
+    public void receiveASAPMessage(ASAPMessages asapMessages) throws IOException {
         CharSequence uri = asapMessages.getURI();
 
         Iterator<byte[]> msgIter = asapMessages.getMessages();
@@ -86,5 +90,31 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
             }
         }
+    }
+
+    @Override
+    public List<SensorData> getSensorDataForId(String id){
+        return repo.selectAllForId(id);
+    }
+
+    @Override
+    public SensorData getSensorDataForIdAndTime(String id, Date dt) {
+        return repo.selectSpecificEntry(id, dt);
+    }
+
+
+    @Override
+    public void asapMessagesReceived(ASAPMessages asapMessages, String s, List<ASAPHop> list) throws IOException {
+        this.receiveASAPMessage(asapMessages);
+    }
+
+    Date getNewestFromList(List<SensorData> list){
+        Date newestDate = list.get(0).getDt();
+        for(SensorData data: list){
+            if(data.getDt().after(newestDate)){
+                newestDate = data.getDt();
+            }
+        }
+        return newestDate;
     }
 }
