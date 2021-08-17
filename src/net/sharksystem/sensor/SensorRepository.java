@@ -12,11 +12,11 @@ public interface SensorRepository {
     List<SensorData> selectAllForId(String sensorId);
 
     //Select one specific entry with id and datetime
-    SensorData selectSpecificEntry(String sensorId, Date dt);
+    SensorData selectSpecificEntry(String sensorId, double dt);
 
     //Insert a list with dataEntries
     void insertNewEntries(List<SensorData> newList);
 
     //Select entries for sensorId that are newer than a given datetime
-    List<SensorData> selectForIdNewerThan(Date date, String sensorId);
+    List<SensorData> selectForIdNewerThan(double date, String sensorId);
     }

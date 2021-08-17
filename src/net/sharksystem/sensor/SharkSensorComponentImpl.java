@@ -19,7 +19,7 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     private ASAPPeer peer;
     private SharkSensorSerializer serializer;
     private String sensorId;
-    private Date newest;
+    private SensorData newestEntry;
 
 
 
@@ -48,31 +48,34 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     @Override
     public void checkForNewDataInDB(){
         List<SensorData> entries = new ArrayList<>();
-        if(this.newest==null){
+        if(this.newestEntry==null){
             entries.addAll(repo.selectAllForId(this.sensorId));
-            this.newest = getNewestFromList(entries);
+            this.newestEntry = getNewestFromList(entries);
         }
         else{
-            entries.addAll(repo.selectForIdNewerThan(this.newest, this.sensorId));
+            entries.addAll(repo.selectForIdNewerThan(this.newestEntry.getDt(), this.sensorId));
         }
         if(!entries.isEmpty()) {
             this.sendNewSensorDataToASAPPeer(entries);
         }
     }
 
+    /*don't serialize the whole list because if there are some duplicates
+     in two different lists the ASAP-Peer does not notice. If the sensorComponent gets re-started after being down,
+     it re-sends all Entries concerning its own sensor module. It#s important that the ASAp-Peers only saves
+     and distributes new records*/
     @Override
-    public void sendNewSensorDataToASAPPeer(List<SensorData> sensorData) {
-        try {
-            this.peer.sendASAPMessage(APP_FORMAT, URI, serializer.serializeSensorData(sensorData).getBytes());
-        }
-        catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        catch (NullPointerException e){
-            e.printStackTrace();
-        }
-        catch (ASAPException e) {
-            e.printStackTrace();
+    public void sendNewSensorDataToASAPPeer(List<SensorData> list) {
+        for(SensorData data: list) {
+            try {
+                this.peer.sendASAPMessage(APP_FORMAT, URI, serializer.serializeSensorData(data).getBytes());
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } catch (ASAPException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -100,7 +103,7 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     }
 
     @Override
-    public SensorData getSensorDataForIdAndTime(String id, Date dt) {
+    public SensorData getSensorDataForIdAndTime(String id, double dt) {
         return repo.selectSpecificEntry(id, dt);
     }
 
@@ -110,13 +113,14 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
         this.receiveASAPMessage(asapMessages);
     }
 
-    Date getNewestFromList(List<SensorData> list){
-        Date newestDate = list.get(0).getDt();
+    SensorData getNewestFromList(List<SensorData> list){
+        SensorData newestEntry = list.get(0);
+
         for(SensorData data: list){
-            if(data.getDt().after(newestDate)){
-                newestDate = data.getDt();
+            if(data.getDt() > (newestEntry.getDt())){
+                newestEntry = data;
             }
         }
-        return newestDate;
+        return newestEntry;
     }
 }

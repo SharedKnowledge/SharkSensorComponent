@@ -4,9 +4,6 @@ import java.util.Date;
 
 public class SensorData {
 
-
-
-
     private String bn;
     private double temp;
     private Unit tempUnit;
@@ -14,10 +11,10 @@ public class SensorData {
     private Unit soilUnit;
     private double hum;
     private Unit humUnit;
-    private Date dt;
+    private double dt;
 
     public SensorData(String bn, double temp, Unit tempUnit, double soil,
-                      Unit soilUnit, double hum, Unit humUnit, Date dt) {
+                      Unit soilUnit, double hum, Unit humUnit, double dt) {
         this.bn = bn;
         this.temp = temp;
         this.tempUnit = tempUnit;
@@ -61,11 +58,11 @@ public class SensorData {
         this.hum = hum;
     }
 
-    public Date getDt() {
+    public double getDt() {
         return dt;
     }
 
-    public void setDt(Date dt) {
+    public void setDt(double dt) {
         this.dt = dt;
     }
 

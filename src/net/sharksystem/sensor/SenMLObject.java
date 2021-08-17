@@ -7,13 +7,14 @@ import java.util.Date;
 public class SenMLObject {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String bn;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    Date bt;
+    //bt only gets parsed to json string if the value differs from the default value of 0.0
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    double bt = 0.0;
     String n;
     String u;
     double v;
 
-    public SenMLObject(String bn, Date bt, String n, String u, double v) {
+    public SenMLObject(String bn, double bt, String n, String u, double v) {
         this.bn = bn;
         this.bt = bt;
         this.n = n;
@@ -38,11 +39,11 @@ public class SenMLObject {
         this.bn = bn;
     }
 
-    public Date getBt() {
+    public double getBt() {
         return bt;
     }
 
-    public void setBt(Date bt) {
+    public void setBt(double bt) {
         this.bt = bt;
     }
 

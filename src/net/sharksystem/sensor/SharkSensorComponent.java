@@ -5,7 +5,6 @@ import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPMessages;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 
 @ASAPFormats(formats = {SharkSensorComponent.APP_FORMAT})
@@ -15,7 +14,7 @@ public interface SharkSensorComponent extends SharkComponent {
 
     List<SensorData> getSensorDataForId(String id);
 
-    SensorData getSensorDataForIdAndTime(String id, Date dt);
+    SensorData getSensorDataForIdAndTime(String id, double dt);
 
     void checkForNewDataInDB();
 

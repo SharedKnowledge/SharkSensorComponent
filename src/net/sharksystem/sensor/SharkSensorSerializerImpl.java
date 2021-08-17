@@ -65,7 +65,7 @@ public class SharkSensorSerializerImpl implements SharkSensorSerializer {
 
                         if (senMLObject.bn != null) {
                             entry.setBn(senMLObject.bn);
-                            entry.setDt(senMLObject.bt);
+                            entry.setDt(senMLObject.getBt());
                             entry.setTempUnit(Unit.valueOf(senMLObject.u));
                             entry.setTemp(senMLObject.v);
                         }
@@ -96,9 +96,10 @@ public class SharkSensorSerializerImpl implements SharkSensorSerializer {
         if(data == null){
             return null;
         }
-        if(data.getBn() != null && data.getDt() != null
-                && data.getHumUnit() != null && data.getSoilUnit() != null && data.getTempUnit() != null) {
-            senMLList.add(new SenMLObject(data.getBn(), data.getDt(), "temp", data.getTempUnit().toString(), data.getTemp()));
+        if(data.getBn() != null && data.getHumUnit() != null
+                && data.getSoilUnit() != null && data.getTempUnit() != null) {
+            senMLList.add(new SenMLObject(
+                    data.getBn(), data.getDt(), "temp", data.getTempUnit().toString(), data.getTemp()));
             senMLList.add(new SenMLObject("humidity", data.getHumUnit().toString(), data.getHum()));
             senMLList.add(new SenMLObject("soil", data.getSoilUnit().toString(), data.getSoil()));
         }

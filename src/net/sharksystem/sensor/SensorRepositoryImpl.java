@@ -72,11 +72,9 @@ public class SensorRepositoryImpl implements SensorRepository {
                         Unit.valueOf(rs.getString("soil_unit")),
                     rs.getDouble("hum"),
                         Unit.valueOf(rs.getString("hum_unit")),
-                    dateHelper.StringToDate(rs.getString("dt")));
+                    rs.getDouble("dt"));
 
                 entryList.add(entry);
-            } catch (ParseException e) {
-                e.printStackTrace();
             }
             catch (IllegalArgumentException e){
                 e.printStackTrace();
@@ -86,13 +84,13 @@ public class SensorRepositoryImpl implements SensorRepository {
     }
 
     @Override
-    public SensorData selectSpecificEntry(String sensorId, Date dt) {
+    public SensorData selectSpecificEntry(String sensorId, double dt) {
         String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt = ?;";
 
         try(Connection conn = this.connect();
             PreparedStatement pstmt = conn.prepareStatement(selectSQL)){
             pstmt.setString(1, sensorId);
-            pstmt.setString(2, dateHelper.dateToString(dt));
+            pstmt.setDouble(2, dt);
             ResultSet rs = pstmt.executeQuery();
 
             return new SensorData(
@@ -103,11 +101,9 @@ public class SensorRepositoryImpl implements SensorRepository {
                     Unit.valueOf(rs.getString("soil_unit")),
                     rs.getDouble("hum"),
                     Unit.valueOf(rs.getString("hum_unit")),
-                    dateHelper.StringToDate(rs.getString("dt")));
+                    (rs.getDouble("dt")));
 
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
@@ -123,7 +119,7 @@ public class SensorRepositoryImpl implements SensorRepository {
             PreparedStatement pstmt = conn.prepareStatement(sql)){
             for(SensorData entry: newList){
             pstmt.setString(1, entry.getBn());
-            pstmt.setString(2, dateHelper.dateToString(entry.getDt()));
+            pstmt.setDouble(2, entry.getDt());
             pstmt.setDouble(3,entry.getTemp());
             pstmt.setDouble(4, entry.getHum());
             pstmt.setDouble(5, entry.getSoil());
@@ -135,14 +131,16 @@ public class SensorRepositoryImpl implements SensorRepository {
         }
     }
 
+    //dt stores the seconds since begin of Linux time as float in db. If a value is greater than a given value,
+    //that means, that it is newer because more time has passed since 1970
     @Override
-    public List<SensorData> selectForIdNewerThan(Date date, String sensorId) {
-        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt > CONVERT(datetime, ?);";
+    public List<SensorData> selectForIdNewerThan(double date, String sensorId) {
+        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt > ?);";
         List<SensorData> entryList = new ArrayList<>();
         try(Connection conn = this.connect();
             PreparedStatement pstmt = conn.prepareStatement(selectSQL)){
             pstmt.setString(1, sensorId);
-            pstmt.setString(2, dateHelper.dateToString(date));
+            pstmt.setDouble(2, date);
             ResultSet rs = pstmt.executeQuery();
 
             entryList = getObjectsFromResultSet(rs);
