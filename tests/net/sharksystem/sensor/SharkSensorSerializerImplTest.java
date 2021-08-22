@@ -19,11 +19,8 @@ class SharkSensorSerializerImplTest {
 
     @BeforeEach
     void setup(){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
         ObjectMapper mapper = new ObjectMapper();
-        this.helper = new DateHelperImpl(dateFormat);
-        this.serializer = new SharkSensorSerializerImpl(mapper,dateFormat);
-
+        this.serializer = new SharkSensorSerializerImpl(mapper);
     }
 
     @Test
