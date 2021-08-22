@@ -1,19 +1,15 @@
 package net.sharksystem.sensor;
 
 import java.sql.*;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class SensorRepositoryImpl implements SensorRepository {
 
     private String url;
-    private DateHelper dateHelper;
 
-    public SensorRepositoryImpl(String url, DateHelper dateHelper){
+    public SensorRepositoryImpl(String url){
         this.url = url;
-        this.dateHelper = dateHelper;
     }
 
     private Connection connect(){

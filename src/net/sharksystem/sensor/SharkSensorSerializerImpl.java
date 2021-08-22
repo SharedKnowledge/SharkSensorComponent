@@ -13,9 +13,8 @@ public class SharkSensorSerializerImpl implements SharkSensorSerializer {
 
     private ObjectMapper mapper;
 
-    SharkSensorSerializerImpl(ObjectMapper mapper, SimpleDateFormat dateFormat){
+    SharkSensorSerializerImpl(ObjectMapper mapper){
         this.mapper = mapper;
-        this.mapper.setDateFormat(dateFormat);
     }
 
     @Override
