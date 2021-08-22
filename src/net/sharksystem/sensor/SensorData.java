@@ -85,5 +85,22 @@ public class SensorData {
         this.humUnit = humUnit;
     }
 
+    @Override
+    public boolean equals(Object obj){
+        if(obj.getClass()==SensorData.class){
 
+            SensorData sensorObj = (SensorData)obj;
+            if(sensorObj.getBn().equals(this.bn)&&
+                    sensorObj.getDt()==this.dt&&
+            sensorObj.getTempUnit()==this.tempUnit&&
+            sensorObj.getTemp()==this.temp&&
+            sensorObj.getHumUnit()==this.humUnit&&
+            sensorObj.getHum()==this.hum&&
+            sensorObj.getSoilUnit()==this.soilUnit&&
+            sensorObj.getSoil()==this.soil){
+                return true;
+            }
+        }
+        return false;
+    }
 }

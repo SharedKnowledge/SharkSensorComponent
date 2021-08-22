@@ -5,11 +5,9 @@ import net.sharksystem.SharkException;
 import net.sharksystem.SharkUnknownBehaviourException;
 import net.sharksystem.asap.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,8 +18,6 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     private SharkSensorSerializer serializer;
     private String sensorId;
     private SensorData newestEntry;
-
-
 
     @Override
     public void onStart(ASAPPeer asapPeer) throws SharkException {
@@ -47,33 +43,27 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void checkForNewDataInDB(){
-        List<SensorData> entries = new ArrayList<>();
+        List<SensorData> entries;
         if(this.newestEntry==null){
-            entries.addAll(repo.selectAllForId(this.sensorId));
-            this.newestEntry = getNewestFromList(entries);
+            entries = repo.selectAllForId(this.sensorId);
         }
         else{
-            entries.addAll(repo.selectForIdNewerThan(this.newestEntry.getDt(), this.sensorId));
+            entries = (repo.selectForIdNewerThan(this.newestEntry.getDt(), this.sensorId));
         }
-        if(!entries.isEmpty()) {
-            this.sendNewSensorDataToASAPPeer(entries);
+        if(entries!=null) {
+            if (!entries.isEmpty()) {
+                this.newestEntry = getNewestFromList(entries);
+                this.sendNewSensorDataToASAPPeer(entries);
+            }
         }
     }
 
-    /*don't serialize the whole list because if there are some duplicates
-     in two different lists the ASAP-Peer does not notice. If the sensorComponent gets re-started after being down,
-     it re-sends all Entries concerning its own sensor module. It#s important that the ASAp-Peers only saves
-     and distributes new records*/
     @Override
     public void sendNewSensorDataToASAPPeer(List<SensorData> list) {
         for(SensorData data: list) {
             try {
                 this.peer.sendASAPMessage(APP_FORMAT, URI, serializer.serializeSensorData(data).getBytes());
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-            } catch (ASAPException e) {
+            } catch (JsonProcessingException | ASAPException | NullPointerException e) {
                 e.printStackTrace();
             }
         }
@@ -82,17 +72,13 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     @Override
     public void receiveASAPMessage(ASAPMessages asapMessages) throws IOException {
         CharSequence uri = asapMessages.getURI();
-
         Iterator<byte[]> msgIter = asapMessages.getMessages();
 
         if (URI.equals(uri.toString())) {
             while (msgIter.hasNext()) {
                 byte[] msgContent = msgIter.next();
-                ByteArrayInputStream bais = new ByteArrayInputStream(msgContent);
-                DataInputStream dais = new DataInputStream(bais);
-
-                this.repo.insertNewEntries(serializer.deserializeSensorData(dais.readUTF()));
-
+                String msgString = new String(msgContent, StandardCharsets.UTF_8);
+                this.repo.insertNewEntries(serializer.deserializeSensorData(msgString));
             }
         }
     }
@@ -114,13 +100,20 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     }
 
     SensorData getNewestFromList(List<SensorData> list){
-        SensorData newestEntry = list.get(0);
+        if(list!=null&&!list.isEmpty()) {
+            SensorData newestEntry = list.get(0);
 
-        for(SensorData data: list){
-            if(data.getDt() > (newestEntry.getDt())){
-                newestEntry = data;
+            for (SensorData data : list) {
+                if (data.getDt() > (newestEntry.getDt())) {
+                    newestEntry = data;
+                }
             }
+            return newestEntry;
         }
+        return null;
+    }
+
+    public SensorData getNewestEntry() {
         return newestEntry;
     }
 }
