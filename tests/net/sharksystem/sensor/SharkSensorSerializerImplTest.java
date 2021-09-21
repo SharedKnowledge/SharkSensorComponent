@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SharkSensorSerializerImplTest {
 
-    private DateHelper helper;
     private SharkSensorSerializer serializer;
 
     @BeforeEach
@@ -198,6 +196,7 @@ class SharkSensorSerializerImplTest {
         List<SensorData> list = serializer.deserializeSensorData(json);
         assertEquals(3, list.size());
         assertEquals("testName", list.get(0).getBn());
+        System.out.println("Time: "+list.get(0).getDt());
         assertEquals("testName2", list.get(1).getBn());
         assertEquals("testName3", list.get(2).getBn());
 
