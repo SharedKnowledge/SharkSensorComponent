@@ -17,7 +17,7 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     private ASAPPeer peer;
     private SharkSensorSerializer serializer;
     private String sensorId;
-    private SensorData newestEntry;
+    private List<NewSensorDataReceivedListener> newSensorDataReceivedListeners = new ArrayList<>();
 
     @Override
     public void onStart(ASAPPeer asapPeer) throws SharkException {
@@ -43,29 +43,24 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void checkForNewDataInDB(){
-        List<SensorData> entries;
-        if(this.newestEntry==null){
-            entries = repo.selectAllForId(this.sensorId);
-        }
-        else{
-            entries = (repo.selectForIdNewerThan(this.newestEntry.getDt(), this.sensorId));
-        }
-        if(entries!=null) {
-            if (!entries.isEmpty()) {
-                this.newestEntry = getNewestFromList(entries);
-                this.sendNewSensorDataToASAPPeer(entries);
-            }
+        List<SensorData> newEntries = repo.selectEntriesWhereSentIsFalse(this.sensorId);
+        if(newEntries!=null && !newEntries.isEmpty()){
+            this.sendNewSensorDataToASAPPeer(newEntries);
         }
     }
 
     @Override
     public void sendNewSensorDataToASAPPeer(List<SensorData> list) {
-        for(SensorData data: list) {
-            try {
-                this.peer.sendASAPMessage(APP_FORMAT, URI, serializer.serializeSensorData(data).getBytes());
-            } catch (JsonProcessingException | ASAPException | NullPointerException e) {
-                e.printStackTrace();
+        try {
+            for (SensorData data : list) {
+                String msg = serializer.serializeSensorData(data);
+                System.out.println("Message is: " + msg);
+                this.peer.sendASAPMessage(APP_FORMAT, URI, msg.getBytes());
             }
+            //set flag to true to indicate that the entries have been sent to asap peer
+            repo.updateEntries(list);
+        } catch (JsonProcessingException | ASAPException | NullPointerException e) {
+            e.printStackTrace();
         }
     }
 
@@ -81,6 +76,11 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
                 this.repo.insertNewEntries(serializer.deserializeSensorData(msgString));
             }
         }
+    }
+
+    @Override
+    public List<String> getAllBaseNames() {
+        return this.repo.selectAllBNs();
     }
 
     @Override
@@ -110,10 +110,5 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
             }
             return newestEntry;
         }
-        return null;
-    }
-
-    public SensorData getNewestEntry() {
-        return newestEntry;
     }
 }
