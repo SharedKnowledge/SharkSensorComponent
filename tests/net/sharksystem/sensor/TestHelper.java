@@ -13,7 +13,7 @@ public class TestHelper {
             SharkPeer sharkPeer,
             SensorRepository repo,
             SharkSensorSerializer serializer,
-            DBUpdatePoller poller,
+            DBUpdateSocket poller,
             String sensorId) throws SharkException {
 
         SharkSensorComponentFactory factory = new SharkSensorComponentFactory(repo,serializer,poller,sensorId);

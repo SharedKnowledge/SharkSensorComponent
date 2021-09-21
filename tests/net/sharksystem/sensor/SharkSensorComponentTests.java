@@ -31,7 +31,7 @@ public class SharkSensorComponentTests {
     private SharkTestPeerFS alicePeer;
     private SharkSensorComponent aliceComponent;
     private SensorRepository aliceRepo;
-    private DBUpdatePoller alicePoller;
+    private DBUpdateSocket alicePoller;
 
     static final CharSequence BOB = "Bob";
     static final String BOB_ID = "Bob"+"ID";
@@ -39,7 +39,7 @@ public class SharkSensorComponentTests {
     private SharkTestPeerFS bobPeer;
     private SharkSensorComponent bobComponent;
     private SensorRepository bobRepo;
-    private DBUpdatePoller bobPoller;
+    private DBUpdateSocket bobPoller;
     private static int portNumber = 5000;
 
     private int getPortNumber() {
@@ -51,7 +51,7 @@ public class SharkSensorComponentTests {
         SharkTestPeerFS.removeFolder(ALICE_ROOTFOLDER);
         this.alicePeer = new SharkTestPeerFS(ALICE,ALICE_ROOTFOLDER);
         this.aliceRepo = mock(SensorRepository.class);
-        this.alicePoller = mock(DBUpdatePoller.class);
+        this.alicePoller = null;
         this.aliceComponent = TestHelper.setupComponent(
                 this.alicePeer,aliceRepo,new SharkSensorSerializerImpl(new ObjectMapper()),alicePoller,ALICE_ID);
         this.alicePeer.start();
@@ -59,7 +59,7 @@ public class SharkSensorComponentTests {
         SharkTestPeerFS.removeFolder(BOB_ROOTFOLDER);
         this.bobPeer = new SharkTestPeerFS(BOB,BOB_ROOTFOLDER);
         this.bobRepo = mock(SensorRepository.class);
-        this.bobPoller = mock(DBUpdatePoller.class);
+        this.bobPoller = null;
         this.bobComponent = TestHelper.setupComponent(
                 this.bobPeer,bobRepo,new SharkSensorSerializerImpl(new ObjectMapper()),bobPoller,BOB_ID.toString());
         this.bobPeer.start();
@@ -88,8 +88,8 @@ public class SharkSensorComponentTests {
         List<SensorData> sd = new ArrayList<>();
         SensorData data1 = new SensorData("testName", 23.1,Unit.K,76.5,Unit.P,65.3,Unit.P,1355267532.0);
         sd.add(data1);
-        when(aliceRepo.selectAllForId(anyString())).thenReturn(sd);
-        doNothing().when(this.alicePoller).run();
+        when(aliceRepo.selectEntriesWhereSentIsFalse(anyString())).thenReturn(sd);
+        doNothing().when(aliceRepo).updateEntries(anyList());
         doNothing().when(this.bobRepo).insertNewEntries(sd);
         this.aliceComponent.checkForNewDataInDB();
         this.runEncounter(this.alicePeer,this.bobPeer, true);
@@ -97,7 +97,6 @@ public class SharkSensorComponentTests {
 
         Mockito.verify(this.bobRepo, Mockito.times(1)).insertNewEntries(argumentCaptor.capture());
         assertEquals(data1, argumentCaptor.getValue().get(0));
-        assertEquals(data1,this.aliceComponent.getNewestEntry());
     }
     @Test
     public void checkForNewDataInDBWhenNewestEntryIsNull(){
@@ -115,9 +114,8 @@ public class SharkSensorComponentTests {
         SensorData data2 = new SensorData(ALICE_ID, 34.6,Unit.C,34.1,Unit.P,35.7,Unit.P,1.355297659E9);
         sd.add(data1);
         sd.add(data2);
-        when(aliceRepo.selectAllForId(ALICE_ID)).thenReturn(sd);
-        doNothing().when(this.alicePoller).run();
-        doNothing().when(this.bobPoller).run();
+        when(aliceRepo.selectEntriesWhereSentIsFalse(ALICE_ID)).thenReturn(sd);
+        doNothing().when(aliceRepo).updateEntries(anyList());
         doNothing().when(this.bobRepo).insertNewEntries(anyList());
         this.aliceComponent.checkForNewDataInDB();
         this.runEncounter(this.alicePeer,this.bobPeer, true);
@@ -128,56 +126,28 @@ public class SharkSensorComponentTests {
         assertEquals(data1,capturedList.get(0).get(0));
         assertEquals(data2,capturedList.get(1).get(0));
 
-        assertEquals(data2,this.aliceComponent.getNewestEntry());
-
     }
     @Test
     public void checkForNewDataInDBWhenNoEntryIsInDB() throws SharkException, ASAPException {
         this.setUpAliceBobExchangeScenario();
-        when(aliceRepo.selectAllForId(ALICE_ID)).thenReturn(null);
+        when(aliceRepo.selectEntriesWhereSentIsFalse(ALICE_ID)).thenReturn(new ArrayList<SensorData>());
         this.aliceComponent.checkForNewDataInDB();
         ASAPPeer mockPeer = mock(ASAPPeerFS.class);
         SensorRepository repo = mock(SensorRepository.class);
         SharkSensorComponent component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
         component.onStart(mockPeer);
         verify(mockPeer,times(0)).sendASAPMessage(anyString(),anyString(),any());
-        assertNull(aliceComponent.getNewestEntry());
     }
-    @Test
-    public void getNewestFromList(){
-        List<SensorData> list = new ArrayList<>();
-        SensorData data1 = new SensorData(ALICE_ID, 293.1,Unit.K,76.5,Unit.P,65.3,Unit.P,1.155267532E9);
-        SensorData data2 = new SensorData(BOB_ID, 34.6,Unit.C,34.1,Unit.P,35.7,Unit.P,1.155297659E9);
-        SensorData data3 = new SensorData(ALICE_ID, 92.1,Unit.F,25.5,Unit.P,78.3,Unit.P,1.255267532E9);
-        SensorData data4 = new SensorData("TestId", -12.6,Unit.C,70.1,Unit.P,42.7,Unit.P,1.345297659E9);
-        list.add(data1);
-        list.add(data2);
-        list.add(data3);
-        list.add(data4);
-        SensorRepository repo = mock(SensorRepository.class);
-        SharkSensorComponentImpl component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
-        assertEquals(data4,component.getNewestFromList(list));
-    }
-    @Test
-    public void getNewestFromListWhenListIsNull(){
-        SensorRepository repo = mock(SensorRepository.class);
-        SharkSensorComponentImpl component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
-        assertNull(component.getNewestFromList(null));
-    }
-    @Test
-    public void getNewestFromListWhenNoEntry(){
-        SensorRepository repo = mock(SensorRepository.class);
-        SharkSensorComponentImpl component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
-        assertNull(component.getNewestFromList(new ArrayList<>()));
-    }
-    @Test
-    public void getNewestFromListWhenSingleEntry(){
-        List<SensorData> list = new ArrayList<>();
-        SensorData data = new SensorData("TestId", -12.6,Unit.C,70.1,Unit.P,42.7,Unit.P,1.345297659E9);
 
-        list.add(data);
+    @Test
+    public void checkForNewDataInDBWhenEntriesIsNull() throws SharkException, ASAPException {
+        this.setUpAliceBobExchangeScenario();
+        when(aliceRepo.selectEntriesWhereSentIsFalse(ALICE_ID)).thenReturn(null);
+        this.aliceComponent.checkForNewDataInDB();
+        ASAPPeer mockPeer = mock(ASAPPeerFS.class);
         SensorRepository repo = mock(SensorRepository.class);
-        SharkSensorComponentImpl component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
-        assertEquals(data,component.getNewestFromList(list));
+        SharkSensorComponent component = new SharkSensorComponentImpl(repo, new SharkSensorSerializerImpl(new ObjectMapper()),ALICE_ID);
+        component.onStart(mockPeer);
+        verify(mockPeer,times(0)).sendASAPMessage(anyString(),anyString(),any());
     }
 }

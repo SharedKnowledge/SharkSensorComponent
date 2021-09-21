@@ -8,13 +8,13 @@ public class SharkSensorComponentFactory implements SharkComponentFactory {
 
     private final SharkSensorSerializer serializer;
     private final SensorRepository repo;
-    private final DBUpdatePoller dbUpdateListener;
+    private final DBUpdateSocket dbUpdateListener;
     private final String sensorId;
 
     public SharkSensorComponentFactory(
             SensorRepository repo,
             SharkSensorSerializer serializer,
-            DBUpdatePoller dbUpdatePoller,
+            DBUpdateSocket dbUpdatePoller,
             String sensorId){
         this.repo = repo;
         this.serializer = serializer;
@@ -26,9 +26,11 @@ public class SharkSensorComponentFactory implements SharkComponentFactory {
     public SharkComponent getComponent() {
         SharkSensorComponent component = new SharkSensorComponentImpl(
                 this.repo, this.serializer, this.sensorId);
-        dbUpdateListener.addSharkSensorComponent(component);
-        dbUpdateListener.setDaemon(true);
-        dbUpdateListener.start();
+        if(dbUpdateListener!=null) {
+            dbUpdateListener.addSharkSensorComponent(component);
+            dbUpdateListener.setDaemon(true);
+            dbUpdateListener.start();
+        }
         return component;
     }
 }
