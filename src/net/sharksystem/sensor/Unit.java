@@ -8,4 +8,17 @@ package net.sharksystem.sensor;
  */
 public enum Unit {
     C, F, K, P;
+
+    public static String getStringValue(Unit u){
+        switch (u){
+            case C:
+                return "°C";
+            case P:
+                return "%";
+            case F:
+                return "°F";
+        }
+        return u.toString();
+    }
 }
+
