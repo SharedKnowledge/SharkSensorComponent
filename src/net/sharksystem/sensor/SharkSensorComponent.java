@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.List;
 
 @ASAPFormats(formats = {SharkSensorComponent.APP_FORMAT})
-public interface SharkSensorComponent extends SharkComponent {
+public interface SharkSensorComponent extends SharkComponent, NewSensorDataReceivedNotifier {
     String APP_FORMAT = "shark/sensor";
     String URI = "sharkSensor://sensorData";
 

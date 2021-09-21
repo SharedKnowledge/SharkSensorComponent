@@ -75,6 +75,7 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
                 String msgString = new String(msgContent, StandardCharsets.UTF_8);
                 this.repo.insertNewEntries(serializer.deserializeSensorData(msgString));
             }
+            this.notifyReceived();
         }
     }
 
@@ -99,16 +100,17 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
         this.receiveASAPMessage(asapMessages);
     }
 
-    SensorData getNewestFromList(List<SensorData> list){
-        if(list!=null&&!list.isEmpty()) {
-            SensorData newestEntry = list.get(0);
-
-            for (SensorData data : list) {
-                if (data.getDt() > (newestEntry.getDt())) {
-                    newestEntry = data;
-                }
-            }
-            return newestEntry;
+    @Override
+    public void addNewSensorDataReceivedListener(NewSensorDataReceivedListener listener){
+        this.newSensorDataReceivedListeners.add(listener);
+    }
+    @Override
+    public void removeSensorDataReceivedListener(NewSensorDataReceivedListener listener){
+        this.newSensorDataReceivedListeners.remove(listener);
+    }
+    private void notifyReceived(){
+        for(NewSensorDataReceivedListener listener: this.newSensorDataReceivedListeners){
+            listener.dataReceived();
         }
     }
 }
