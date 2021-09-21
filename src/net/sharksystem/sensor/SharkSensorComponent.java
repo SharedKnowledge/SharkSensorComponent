@@ -18,9 +18,9 @@ public interface SharkSensorComponent extends SharkComponent, NewSensorDataRecei
 
     void checkForNewDataInDB();
 
-    void sendNewSensorDataToASAPPeer(List<SensorData> sensorData);
+    void sendSensorData(List<SensorData> sensorData);
 
-    public void receiveASAPMessage(ASAPMessages asapMessages) throws IOException;
+    public void receiveSensorData(List<SensorData> sensorData) throws IOException;
 
     public List<String> getAllBaseNames();
 

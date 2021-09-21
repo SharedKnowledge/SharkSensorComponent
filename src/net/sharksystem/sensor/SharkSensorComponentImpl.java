@@ -32,7 +32,6 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
         this.repo = repo;
         this.serializer = serializer;
         this.sensorId = sensorId;
-
     }
 
     @Override
@@ -40,17 +39,16 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
         // IGNORE
     }
 
-
     @Override
     public void checkForNewDataInDB(){
         List<SensorData> newEntries = repo.selectEntriesWhereSentIsFalse(this.sensorId);
         if(newEntries!=null && !newEntries.isEmpty()){
-            this.sendNewSensorDataToASAPPeer(newEntries);
+            this.sendSensorData(newEntries);
         }
     }
 
     @Override
-    public void sendNewSensorDataToASAPPeer(List<SensorData> list) {
+    public void sendSensorData(List<SensorData> list) {
         try {
             for (SensorData data : list) {
                 String msg = serializer.serializeSensorData(data);
@@ -65,18 +63,9 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     }
 
     @Override
-    public void receiveASAPMessage(ASAPMessages asapMessages) throws IOException {
-        CharSequence uri = asapMessages.getURI();
-        Iterator<byte[]> msgIter = asapMessages.getMessages();
-
-        if (URI.equals(uri.toString())) {
-            while (msgIter.hasNext()) {
-                byte[] msgContent = msgIter.next();
-                String msgString = new String(msgContent, StandardCharsets.UTF_8);
-                this.repo.insertNewEntries(serializer.deserializeSensorData(msgString));
-            }
-            this.notifyReceived();
-        }
+    public void receiveSensorData(List<SensorData> sensorDataList) throws IOException {
+        this.repo.insertNewEntries(sensorDataList);
+        this.notifyReceived();
     }
 
     @Override
@@ -97,7 +86,17 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void asapMessagesReceived(ASAPMessages asapMessages, String s, List<ASAPHop> list) throws IOException {
-        this.receiveASAPMessage(asapMessages);
+        CharSequence uri = asapMessages.getURI();
+        Iterator<byte[]> msgIter = asapMessages.getMessages();
+
+        if (URI.equals(uri.toString())) {
+            while (msgIter.hasNext()) {
+                byte[] msgContent = msgIter.next();
+                String msgString = new String(msgContent, StandardCharsets.UTF_8);
+                List<SensorData> sensorDataList = serializer.deserializeSensorData(msgString);
+                    this.receiveSensorData(sensorDataList);
+            }
+        }
     }
 
     @Override
