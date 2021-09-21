@@ -1,8 +1,8 @@
 package net.sharksystem.sensor;
 
-import java.util.Date;
+import java.io.Serializable;
 
-public class SensorData {
+public class SensorData implements Serializable {
 
     private String bn;
     private double temp;
