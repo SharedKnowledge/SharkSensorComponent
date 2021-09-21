@@ -22,5 +22,6 @@ public interface SharkSensorComponent extends SharkComponent {
 
     public void receiveASAPMessage(ASAPMessages asapMessages) throws IOException;
 
-    SensorData getNewestEntry();
+    public List<String> getAllBaseNames();
+
 }

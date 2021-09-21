@@ -19,4 +19,11 @@ public interface SensorRepository {
 
     //Select entries for sensorId that are newer than a given datetime
     List<SensorData> selectForIdNewerThan(double date, String sensorId);
+
+    void updateEntries(List<SensorData> newList);
+
+    public List<SensorData> selectEntriesWhereSentIsFalse(String sensorId);
+
+    public List<String> selectAllBNs();
+
     }

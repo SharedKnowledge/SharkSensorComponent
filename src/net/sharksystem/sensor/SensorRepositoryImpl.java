@@ -131,7 +131,7 @@ public class SensorRepositoryImpl implements SensorRepository {
     //that means, that it is newer because more time has passed since 1970
     @Override
     public List<SensorData> selectForIdNewerThan(double date, String sensorId) {
-        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt > ?);";
+        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND dt > ?;";
         List<SensorData> entryList = new ArrayList<>();
         try(Connection conn = this.connect();
             PreparedStatement pstmt = conn.prepareStatement(selectSQL)){
@@ -146,5 +146,53 @@ public class SensorRepositoryImpl implements SensorRepository {
             e.printStackTrace();
         }
         return entryList;    }
+
+    @Override
+    public void updateEntries(List<SensorData> newList) {
+        String sqlStmt = "UPDATE sensor_data SET sent = 1 WHERE base_name = ? AND dt = ?;";
+        for(SensorData data: newList){
+            try(Connection conn = this.connect();
+            PreparedStatement pstmt = conn.prepareStatement(sqlStmt)){
+                pstmt.setString(1, data.getBn());
+                pstmt.setDouble(2, data.getDt());
+                pstmt.executeUpdate();
+            }
+            catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public List<SensorData> selectEntriesWhereSentIsFalse(String sensorId){
+        String selectSQL = "SELECT * FROM sensor_data WHERE base_name = ? AND sent = 0;";
+        List<SensorData> entryList = new ArrayList<>();
+        try(Connection conn = this.connect();
+            PreparedStatement pstmt = conn.prepareStatement(selectSQL)){
+            pstmt.setString(1, sensorId);
+            ResultSet rs = pstmt.executeQuery();
+            entryList = getObjectsFromResultSet(rs);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return entryList;
+    }
+
+
+    public List<String> selectAllBNs(){
+        String sql = "SELECT DISTINCT BASE_NAME FROM sensor_data";
+        List<String> BNs = new ArrayList<>();
+        try(Connection conn = this.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)) {
+            while(rs.next()) {
+                BNs.add(rs.getString("base_name"));
+            }
+        }
+        catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return BNs;
+    }
 
 }
