@@ -53,36 +53,38 @@ public class SharkSensorSerializerImpl implements SharkSensorSerializer {
             throw new NullPointerException();
         }
         List<SensorData> sensorDataList = new ArrayList<>();
-        SensorData entry = new SensorData();
+        SensorData entry = null;
         try {
             List<SenMLObject> data = this.mapper.readValue(jsonString, new TypeReference<List<SenMLObject>>() {
             });
             //convert senMLObjects to SensorData
             for (SenMLObject senMLObject : data) {
-                switch (senMLObject.n) {
-                    case "temp":
-
-                        if (senMLObject.bn != null) {
-                            entry.setBn(senMLObject.bn);
-                            entry.setDt(senMLObject.getBt());
+                if (senMLObject.bn != null) {
+                    if ((entry) != null) {
+                        sensorDataList.add(entry);
+                    }
+                    entry = new SensorData();
+                    entry.setBn(senMLObject.bn);
+                    entry.setDt(senMLObject.getBt());
+                }
+                    switch (senMLObject.n) {
+                        case "temp":
                             entry.setTempUnit(Unit.valueOf(senMLObject.u));
                             entry.setTemp(senMLObject.v);
-                        }
-                        else{
-                            throw new NullPointerException();
-                        }
-                        break;
-                    case "humidity":
-                        entry.setHumUnit(Unit.valueOf(senMLObject.u));
-                        entry.setHum(senMLObject.v);
-                        break;
-                    case "soil":
-                        entry.setSoilUnit(Unit.valueOf(senMLObject.u));
-                        entry.setSoil(senMLObject.v);
-                        sensorDataList.add(entry);
-                        entry = new SensorData();
-                        break;
+                            break;
+                        case "humidity":
+                            entry.setHumUnit(Unit.valueOf(senMLObject.u));
+                            entry.setHum(senMLObject.v);
+                            break;
+                        case "soil":
+                            entry.setSoilUnit(Unit.valueOf(senMLObject.u));
+                            entry.setSoil(senMLObject.v);
+                            break;
+
                 }
+            }
+            if(entry!=null){
+                sensorDataList.add(entry);
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
