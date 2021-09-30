@@ -22,7 +22,6 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
     @Override
     public void onStart(ASAPPeer asapPeer) throws SharkException {
         this.peer = asapPeer;
-
         this.peer.addASAPMessageReceivedListener(
                 SharkSensorComponent.APP_FORMAT, this);
     }
@@ -49,23 +48,27 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void sendSensorData(List<SensorData> list) {
-        try {
-            for (SensorData data : list) {
-                String msg = serializer.serializeSensorData(data);
-                System.out.println("Message is: " + msg);
-                this.peer.sendASAPMessage(APP_FORMAT, URI, msg.getBytes());
+        if(list!=null&& !list.isEmpty()) {
+            try {
+                for (SensorData data : list) {
+                    String msg = serializer.serializeSensorData(data);
+                    System.out.println("Message is: " + msg);
+                    this.peer.sendASAPMessage(APP_FORMAT, URI, msg.getBytes());
+                }
+                //set flag to true to indicate that the entries have been sent to asap peer
+                repo.updateEntries(list);
+            } catch (JsonProcessingException | ASAPException | NullPointerException e) {
+                e.printStackTrace();
             }
-            //set flag to true to indicate that the entries have been sent to asap peer
-            repo.updateEntries(list);
-        } catch (JsonProcessingException | ASAPException | NullPointerException e) {
-            e.printStackTrace();
         }
     }
 
     @Override
     public void receiveSensorData(List<SensorData> sensorDataList) throws IOException {
-        this.repo.insertNewEntries(sensorDataList);
-        this.notifyReceived();
+        if(sensorDataList != null && !sensorDataList.isEmpty()) {
+            this.repo.insertNewEntries(sensorDataList);
+            this.notifyReceived();
+        }
     }
 
     @Override
@@ -101,13 +104,18 @@ public class SharkSensorComponentImpl implements SharkSensorComponent, ASAPMessa
 
     @Override
     public void addNewSensorDataReceivedListener(NewSensorDataReceivedListener listener){
-        this.newSensorDataReceivedListeners.add(listener);
+        if (listener != null) {
+            this.newSensorDataReceivedListeners.add(listener);
+        }
     }
     @Override
     public void removeSensorDataReceivedListener(NewSensorDataReceivedListener listener){
-        this.newSensorDataReceivedListeners.remove(listener);
+        if (listener != null) {
+            this.newSensorDataReceivedListeners.remove(listener);
+        }
     }
-    private void notifyReceived(){
+    @Override
+    public void notifyReceived(){
         for(NewSensorDataReceivedListener listener: this.newSensorDataReceivedListeners){
             listener.dataReceived();
         }

@@ -20,7 +20,7 @@ public interface SharkSensorComponent extends SharkComponent, NewSensorDataRecei
 
     void sendSensorData(List<SensorData> sensorData);
 
-    public void receiveSensorData(List<SensorData> sensorData) throws IOException;
+    void receiveSensorData(List<SensorData> sensorData) throws IOException;
 
     public List<String> getAllBaseNames();
 
